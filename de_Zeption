@@ -1,0 +1,93 @@
+#!/usr/bin/python
+
+from PIL import Image
+import sys
+import os
+import zipfile37 as zipfile
+
+# The morseHunt function reviews an image file, pixel by pixel to determine 
+# if the pixel is background or a character space. Char space is counted
+# to determine if it is a period (1 pixel) or tack (3 pixels). The function
+# returns the translated morse code message.
+
+def morseHunt(input_img_path):
+
+    try:
+        color_image = Image.open(input_img_path)
+
+    except IOError:
+        print("unable to load image")
+        sys.exit(1)
+
+    im = Image.open(input_img_path)
+    pixels = im.load()
+    baseline = pixels[0,0]
+    morseCode = ''
+    count = 0
+    for y in range(im.size[1]):
+        morseCode += ' '
+        for x in range(im.size[0]):
+            if (pixels[x,y] != baseline):
+                count += 1
+            elif (count != 0):
+                morseCode += ('-' if count == 3 else '.')
+                count = 0
+    return morseCode
+
+refCode = {'A': '.-',     'B': '-...',   'C': '-.-.', 
+        'D': '-..',    'E': '.',      'F': '..-.',
+        'G': '--.',    'H': '....',   'I': '..',
+        'J': '.---',   'K': '-.-',    'L': '.-..',
+        'M': '--',     'N': '-.',     'O': '---',
+        'P': '.--.',   'Q': '--.-',   'R': '.-.',
+        'S': '...',    'T': '-',      'U': '..-',
+        'V': '...-',   'W': '.--',    'X': '-..-',
+        'Y': '-.--',   'Z': '--..',
+
+        '0': '-----',  '1': '.----',  '2': '..---',
+        '3': '...--',  '4': '....-',  '5': '.....',
+        '6': '-....',  '7': '--...',  '8': '---..',
+        '9': '----.' 
+        }
+
+codeReversed = {value:key for key,value in refCode.items()}
+
+# Courtesy of stackexchange & donthit.me. Below function queries splits in 
+# the morsecode product from morseHunt function in the above dictionary.
+
+def morse2Pwd(code):
+    return ''.join(str(codeReversed.get(i)) for i in code.split())
+
+# Function below is recursive and will run until flagPath directory finds 
+# flag_0.zip. This function calls morseHunt on pwd.png image & morse2Pwd
+# to decode the message. The function then passes the password to zipfile, 
+# extracts content and migrates into next flag to list directory to assess 
+# if function should be called again.
+
+def inception(flagPath):
+    
+    tgtDir = os.listdir(flagPath)
+
+    for f in range(0,len(tgtDir)):
+        if (tgtDir[f] == 'flag_0.zip'):
+            morseCode = morseHunt('pwd.png')
+            zipPass = morse2Pwd(morseCode).lower()
+            with zipfile.ZipFile(tgtDir[f]) as zfile:
+                zfile.extractall(pwd = bytes(zipPass, 'utf-8'))
+            return 1
+        elif ((tgtDir[f])[-4:] == '.zip'):
+            morseCode = morseHunt('pwd.png')
+            zipPass = morse2Pwd(morseCode).lower()
+            with zipfile.ZipFile(tgtDir[f]) as zfile:
+                zfile.extractall(pwd = bytes(zipPass, 'utf-8'))
+            newDir = os.chdir('flag')
+            inception(os.getcwd())
+
+if __name__ == '__main__':
+
+    
+    path = '/home/kali/hackthebox/chall/miscHTB/m0rse/'
+
+    os.chdir(path)
+
+    inception(os.getcwd())
