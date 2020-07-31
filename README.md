@@ -8,7 +8,7 @@ Problem:
 Problem consisted of a highly nested zip file with password protection. Each zip file had an associated img file with a displayed password.
 
 Method:
-Used pil to analyze each image file, pixel by pixel for message, decoded it and used zipfile module to unzip with newly decoded password.
+Used pil to analyze each image file, pixel by pixel for message, decoded it and used zipfile module to unzip with newly decoded password. Used recursion to find new zip, decode, unzip, cd and repeat until last flag discovered.
 
 Keywords:
 Python, recursion, pil, zipfile, os, sys
